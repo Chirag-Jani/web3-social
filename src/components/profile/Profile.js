@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
-import { client, getProfile, getPublications } from "../../api";
+import { client, getProfile, getPublications, isFollowedByMe } from "../../api";
 import abi from "../../abi.json";
 import { ethers } from "ethers";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Profile = (props) => {
   const id = useLocation().pathname.slice(1);
 
   const [profile, setProfile] = useState();
   const [pub, setPub] = useState([]);
+  const [followOrNot, setFollowOrNot] = useState(false);
+  const [walletConnected, setWalletConnected] = useState(false);
 
   const address = "0xDb46d1Dc155634FbC732f92E853b10B288AD5a1d";
 
   useEffect(() => {
     fetchProfile(id);
-  });
+    checkFollow(id);
+    checkConnection();
+  }, [followOrNot]);
 
   const fetchProfile = async () => {
     try {
@@ -32,7 +36,11 @@ const Profile = (props) => {
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    console.log(accounts);
+    setWalletConnected(window.ethereum.isConnected());
+  };
+
+  const checkConnection = () => {
+    setWalletConnected(window.ethereum.isConnected());
   };
 
   const followUser = async () => {
@@ -45,16 +53,25 @@ const Profile = (props) => {
       const follow = await contract.follow([id], [0x0]);
       follow.wait();
       console.log("Followed Successfully.");
+      setFollowOrNot(true);
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const checkFollow = async () => {
+    const response = await client.query(isFollowedByMe, { id }).toPromise();
+    setFollowOrNot(response.data.profile.isFollowedByMe);
   };
 
   if (!profile) return null;
 
   return (
     <div>
-      <div className="d-flex m-5">
+      <Link to="/" className="btn btn-danger m-4 mx-5">
+        Back
+      </Link>
+      <div className="d-flex m-2 mx-5 justify-content-around">
         <div>
           {profile.coverPicture ? (
             <img
@@ -77,18 +94,35 @@ const Profile = (props) => {
           <p className=""> @{profile.handle}</p>
           <p className="fw-bold"> {profile.name}</p>
           <p> {profile.bio}</p>
-          <button className="btn btn-primary" onClick={followUser}>
-            Follow
-          </button>
-          <button className="mx-2 btn btn-success" onClick={connect}>
-            Connect
-          </button>
+          {!followOrNot ? (
+            <button className="btn btn-primary" onClick={followUser}>
+              Follow
+            </button>
+          ) : (
+            <button className="btn btn-outline-primary" onClick={followUser}>
+              Following
+            </button>
+          )}
+
+          {walletConnected ? (
+            <button className="mx-2 btn btn-outline-success">Connected</button>
+          ) : (
+            <button className="mx-2 btn btn-success" onClick={connect}>
+              Connect
+            </button>
+          )}
         </div>
 
         <div className="d-flex mt-2">
-          <h5 className="mx-4">{profile.stats.totalFollowers} Posts</h5>
-          <h5 className="mx-4">{profile.stats.totalPosts} Followers</h5>
-          <h5 className="mx-4">{profile.stats.totalFollowing} Following</h5>
+          <h5 className="mx-4">
+            {profile.stats.totalFollowers} <br /> Posts
+          </h5>
+          <h5 className="mx-4">
+            {profile.stats.totalPosts} <br /> Followers
+          </h5>
+          <h5 className="mx-4">
+            {profile.stats.totalFollowing} <br /> Following
+          </h5>
         </div>
       </div>
 
@@ -99,7 +133,7 @@ const Profile = (props) => {
         {pub.map((item, index) => {
           return (
             <div key={index} className="ps-3 border-bottom border-dark p-3">
-              <p>{item.metadata.content}...</p>
+              <p>{item.metadata.content}</p>
             </div>
           );
         })}

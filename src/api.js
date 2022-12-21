@@ -6,6 +6,16 @@ export const client = createClient({
   url: APIURL,
 });
 
+export const isFollowedByMe = `
+query Profile(
+  $id: ProfileId!
+) {
+  profile(request: { profileId: $id }) {
+    isFollowedByMe
+  }
+}
+`;
+
 export const getPublications = `
 query Publications(
   $id: ProfileId!
