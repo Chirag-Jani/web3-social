@@ -1,4 +1,3 @@
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { client, getProfile, getPublications } from "../../api";
 import abi from "../../abi.json";
@@ -14,12 +13,8 @@ const Profile = (props) => {
   const address = "0xDb46d1Dc155634FbC732f92E853b10B288AD5a1d";
 
   useEffect(() => {
-    console.log(id);
-
-    if (id) {
-      fetchProfile(id);
-    }
-  }, []);
+    fetchProfile(id);
+  });
 
   const fetchProfile = async () => {
     try {
@@ -59,30 +54,52 @@ const Profile = (props) => {
 
   return (
     <div>
-      <div className="d-flex ">
+      <div className="d-flex m-5">
         <div>
-          <h4>Handle: {profile.handle}</h4>
-          <h4>Name: {profile.name}</h4>
-          <h4>Bio: {profile.bio}</h4>
+          {profile.coverPicture ? (
+            <img
+              className="rounded-circle my-2"
+              width="80px"
+              height="80px"
+              src={`${profile.coverPicture.original.url}`}
+              alt="Profile Image of an User"
+            />
+          ) : (
+            <div
+              style={{
+                width: "80px",
+                height: "80px",
+                background: "black",
+                borderRadius: "50%",
+              }}
+            ></div>
+          )}
+          <p className=""> @{profile.handle}</p>
+          <p className="fw-bold"> {profile.name}</p>
+          <p> {profile.bio}</p>
+          <button className="btn btn-primary" onClick={followUser}>
+            Follow
+          </button>
+          <button className="mx-2 btn btn-success" onClick={connect}>
+            Connect
+          </button>
         </div>
-        <div className="d-flex">
-          <h4>{profile.stats.totalFollowers} Posts</h4>
-          <h4>{profile.stats.totalPosts} Followers</h4>
-          <h4>{profile.stats.totalFollowing} Following</h4>
+
+        <div className="d-flex mt-2">
+          <h5 className="mx-4">{profile.stats.totalFollowers} Posts</h5>
+          <h5 className="mx-4">{profile.stats.totalPosts} Followers</h5>
+          <h5 className="mx-4">{profile.stats.totalFollowing} Following</h5>
         </div>
       </div>
 
-      <button className="mx-2" onClick={connect}>
-        Connect
-      </button>
-      <button className="mx-2" onClick={followUser}>
-        Follow
-      </button>
       <div>
+        <div className="border-bottom border-dark mt-5">
+          <h3 className="ps-3">Posts by user:</h3>
+        </div>
         {pub.map((item, index) => {
           return (
-            <div key={index} className="my-2">
-              <h3>{item.metadata.content}</h3>
+            <div key={index} className="ps-3 border-bottom border-dark p-3">
+              <p>{item.metadata.content}...</p>
             </div>
           );
         })}
